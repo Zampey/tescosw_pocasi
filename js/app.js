@@ -115,7 +115,7 @@ export class App {
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     this.#setStatus('Location found, fetching forecast...');
-                    this.#searchPanel.setInputValue('Current location');
+                    this.#searchPanel.setInputValue(getTranslation().currentLocation);
                     this.#forecastService.fetchForecast(latitude, longitude);
                 },
                 (error) => {

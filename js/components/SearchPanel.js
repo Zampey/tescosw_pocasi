@@ -3,6 +3,8 @@
  * @import { SearchQueryDetail } from '../types/ui.types.js'
  */
 
+import { getTranslation } from '../i18n/i18n.js';
+
 export class SearchPanel extends EventTarget {
     /** @type {HTMLElement} */
     #container;
@@ -12,6 +14,8 @@ export class SearchPanel extends EventTarget {
     #suggestionsList;
     /** @type {HTMLButtonElement} */
     #geoButton;
+    /** @type {number | null} */
+    #debounceTimer = null;
 
     /**
      * Creates an instance of SearchPanel.
@@ -19,7 +23,6 @@ export class SearchPanel extends EventTarget {
      */
     constructor(container) {
         super();
-        // Ensure the container is a valid HTMLElement before proceeding
         if (!(container instanceof HTMLElement)) {
             throw new TypeError('SearchPanel requires a valid HTMLElement container.');
         }
@@ -29,47 +32,70 @@ export class SearchPanel extends EventTarget {
     }
 
     /**
-     * Renders the internal HTML structure and caches DOM elements.
+     * Renders the internal HTML structure using pure DOM API and caches elements.
      * @private
      * @returns {void}
      */
     #render() {
-        this.#container.innerHTML = `
-            <div class="search-panel">
-                <div class="search-box" style="display: flex; gap: 8px; position: relative;">
-                    <input type="text" id="cityInput" placeholder="Zadej název města..." autocomplete="off" style="flex: 1; padding: 10px; font-size: 16px;">
-                    <button id="geoBtn" title="Použít aktuální polohu" style="padding: 0 12px; cursor: pointer;">📍</button>
-                </div>
-                <ul id="suggestionsList" style="list-style: none; padding: 0; margin: 4px 0 0 0; background: white; border: 1px solid #ccc; position: absolute; width: 100%; z-index: 10; display: none;"></ul>
-            </div>
-        `;
+        const t = getTranslation();
 
-        // Cache DOM elements after rendering
-        this.#inputElement = this.#container.querySelector('#cityInput');
-        this.#suggestionsList = this.#container.querySelector('#suggestionsList');
-        this.#geoButton = this.#container.querySelector('#geoBtn');
+        const panelWrapper = document.createElement('div');
+        panelWrapper.className = 'search-panel';
+
+        const searchBox = document.createElement('div');
+        searchBox.className = 'search-box';
+
+        this.#inputElement = document.createElement('input');
+        this.#inputElement.type = 'text';
+        this.#inputElement.id = 'cityInput';
+        this.#inputElement.className = 'search-input';
+        this.#inputElement.placeholder = t.searchPlaceholder || 'Zadej název města...';
+        this.#inputElement.autocomplete = 'off';
+
+        this.#geoButton = document.createElement('button');
+        this.#geoButton.id = 'geoBtn';
+        this.#geoButton.className = 'geo-button';
+        this.#geoButton.title = t.geoTitle || 'Použít aktuální polohu';
+        this.#geoButton.textContent = '📍';
+
+        searchBox.appendChild(this.#inputElement);
+        searchBox.appendChild(this.#geoButton);
+
+        this.#suggestionsList = document.createElement('ul');
+        this.#suggestionsList.id = 'suggestionsList';
+        this.#suggestionsList.className = 'suggestions-list';
+
+        panelWrapper.appendChild(searchBox);
+        panelWrapper.appendChild(this.#suggestionsList);
+
+        this.#container.innerHTML = '';
+        this.#container.appendChild(panelWrapper);
     }
 
     /**
-     * Binds internal event listeners to DOM elements.
+     * Binds internal event listeners with debounce for search inputs.
      * @private
      * @returns {void}
      */
     #bindEvents() {
-        // Handle input events for the search box
         this.#inputElement.addEventListener('input', (e) => {
             const query = /** @type {HTMLInputElement} */ (e.target).value;
-            /** @type {CustomEvent<SearchQueryDetail>} */
-            const event = new CustomEvent('search:query', { detail: { query } });
-            this.dispatchEvent(event);
+
+            if (this.#debounceTimer) {
+                clearTimeout(this.#debounceTimer);
+            }
+
+            this.#debounceTimer = window.setTimeout(() => {
+                /** @type {CustomEvent<SearchQueryDetail>} */
+                const event = new CustomEvent('search:query', { detail: { query } });
+                this.dispatchEvent(event);
+            }, 1000);
         });
 
-        // Handle click events for the geolocation button
         this.#geoButton.addEventListener('click', () => {
             this.dispatchEvent(new CustomEvent('geolocation:request'));
         });
 
-        // Handle clicks outside the search panel to close suggestions
         document.addEventListener('click', (e) => {
             if (!this.#container.contains(/** @type {Node} */(e.target))) {
                 this.clearSuggestions();
@@ -86,24 +112,17 @@ export class SearchPanel extends EventTarget {
     renderSuggestions(locations) {
         this.#suggestionsList.innerHTML = '';
 
-        // If no locations are provided, clear the suggestions and exit
         if (!locations || locations.length === 0) {
             this.clearSuggestions();
             return;
         }
 
-        this.#suggestionsList.style.display = 'block';
+        this.#suggestionsList.classList.add('visible');
 
-        // Render each location as a list item in the suggestions dropdown
         locations.forEach(loc => {
             const li = document.createElement('li');
-            li.style.padding = '8px 12px';
-            li.style.cursor = 'pointer';
-            li.style.borderBottom = '1px solid #eee';
+            li.className = 'suggestion-item';
             li.textContent = `${loc.name} (${loc.country}${loc.state ? `, ${loc.state}` : ''})`;
-
-            li.addEventListener('mouseenter', () => li.style.background = '#f4f4f4');
-            li.addEventListener('mouseleave', () => li.style.background = 'white');
 
             li.addEventListener('click', () => {
                 this.#inputElement.value = loc.name;
@@ -124,7 +143,7 @@ export class SearchPanel extends EventTarget {
      */
     clearSuggestions() {
         this.#suggestionsList.innerHTML = '';
-        this.#suggestionsList.style.display = 'none';
+        this.#suggestionsList.classList.remove('visible');
     }
 
     /**
