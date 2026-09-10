@@ -1,11 +1,7 @@
 import { ApiRequest } from '../api/ApiRequest.js';
 
 /**
- * @typedef {Object} LocationResult
- * @property {string} name - City name
- * @property {number} lat - Latitude
- * @property {number} lon - Longitude
- * @property {string} country - Country code
+ * @import { LocationResult } from '../types/geocoding.types.js'
  */
 
 export class GeocodingService extends EventTarget {
