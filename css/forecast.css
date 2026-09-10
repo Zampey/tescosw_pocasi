@@ -76,7 +76,7 @@
 .toggle-icon {
     font-size: 12px;
     color: var(--text-muted);
-    transition: transform 0.2s;
+    transition: transform 0.3s ease;
 }
 
 .forecast-row-header.expanded .toggle-icon {
@@ -84,50 +84,64 @@
 }
 
 .forecast-row-details {
-    display: none;
-    padding: 14px 18px;
-    border-top: 1px solid var(--border-color);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-in-out, padding 0.35s ease-in-out;
+    border-top: 1px solid transparent;
     background: #ffffff;
+    padding: 0 18px;
 }
 
 .forecast-row-details.expanded {
-    display: block;
+    max-height: 1000px;
+    /* Dostatečná rezerva pro plynulou animaci obsahu */
+    padding: 14px 18px;
+    border-top: 1px solid var(--border-color);
 }
 
-.forecast-details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 10px;
+.forecast-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .forecast-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: #f8fafc;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    padding: 10px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    padding: 10px 14px;
 }
 
-.forecast-detail-item .time {
-    font-size: 12px;
+.forecast-detail-time {
+    font-size: 13px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-main);
 }
 
-.forecast-detail-item .sub-icon {
-    margin: 0 auto;
+.forecast-detail-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
-.forecast-detail-item .temp {
-    font-size: 16px;
+.forecast-detail-weather {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.forecast-detail-weather .temp {
+    font-size: 15px;
     font-weight: bold;
     color: var(--primary);
 }
 
-.forecast-detail-item .meta {
-    font-size: 11px;
+.forecast-detail-meta {
+    font-size: 12px;
     color: var(--text-muted);
+    display: flex;
+    gap: 12px;
 }
