@@ -25,7 +25,7 @@ export class ApiClient {
         const url = request.getUrl(this.#baseUrl);
         const options = request.toFetchOptions();
 
-        // Nativní fetch vrací Promise, ale my ho uvnitř uzavřeme do .then()/.catch()
+        // Send the HTTP request using fetch and handle the response with callbacks
         fetch(url, options)
             .then(async (response) => {
                 let data = null;
@@ -41,7 +41,7 @@ export class ApiClient {
                     throw new Error(`API Error [${response.status}]: ${JSON.stringify(data)}`);
                 }
 
-                // Úspěch - zavoláme callback
+                // Success - call the success callback
                 if (typeof onSuccess === 'function') {
                     onSuccess({
                         data,
@@ -52,7 +52,7 @@ export class ApiClient {
                 }
             })
             .catch((error) => {
-                // Chyba - zavoláme error callback
+                // Error - call the error callback
                 if (typeof onError === 'function') {
                     onError(error);
                 } else {
