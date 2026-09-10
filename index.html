@@ -4,114 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather SPA</title>
-    <style>
-        :root {
-            --bg-color: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-main: #2c3e50;
-            --text-muted: #7f8c8d;
-            --primary: #3498db;
-            --border-color: #e2e8f0;
-            --error-color: #e74c3c;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 650px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        header h1 {
-            font-size: 26px;
-            margin: 0 0 4px 0;
-            color: var(--text-main);
-        }
-
-        header p {
-            margin: 0;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        }
-
-        #statusMessage {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-top: 12px;
-            min-height: 20px;
-        }
-
-        .error {
-            color: var(--error-color) !important;
-            font-weight: 500;
-        }
-
-        .forecast-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 16px;
-            margin-bottom: 16px;
-        }
-
-        .forecast-header h2 {
-            margin: 0;
-            font-size: 20px;
-        }
-
-        .forecast-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
-        }
-
-        .forecast-item {
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 14px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .forecast-item .time {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .forecast-item .temp {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .forecast-item .desc {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-    </style>
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/base.css">
+    <link rel="stylesheet" href="./css/forecast.css">
 </head>
 <body>
 
@@ -130,14 +25,13 @@
             <div class="forecast-header">
                 <h2 id="locationTitle">—</h2>
             </div>
-            <div id="forecastContainer" class="forecast-grid"></div>
+            <div id="forecastContainer" style="display: flex; flex-direction: column; gap: 10px;"></div>
         </section>
     </div>
 
     <script type="module">
         import { App } from './js/App.js';
 
-        // Spuštění aplikace po načtení DOM
         document.addEventListener('DOMContentLoaded', () => {
             const API_KEY = 'bcf9e881cf5a0071957da688310f6493';
             new App(API_KEY);
