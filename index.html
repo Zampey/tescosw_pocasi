@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather SPA</title>
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/base.css">
+    <link rel="stylesheet" href="./css/forecast.css">
+    <link rel="stylesheet" href="./css/search.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1 id="headerTitle">Počasí</h1>
+            <p id="headerSubtitle">Aplikace pro sledování 5denní předpovědi počasí</p>
+            <span id="headerBadge"></span>
+        </header>
+
+        <section class="card">
+            <div id="searchContainer"></div>
+            <div id="statusMessage"></div>
+        </section>
+
+        <section id="forecastSection" class="card" style="display: none;">
+            <div class="forecast-header">
+                <h2 id="locationTitle"></h2>
+            </div>
+            <!-- graph -->
+            <div id="chartContainer"></div>
+            <!-- forecast for the days -->
+            <div id="forecastContainer"></div>
+        </section>
+    </div>
+
+    <script type="module">
+        import { App } from './js/App.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_KEY = 'bcf9e881cf5a0071957da688310f6493';
+            new App(API_KEY);
+        });
+    </script>
+
+</body>
+</html>
