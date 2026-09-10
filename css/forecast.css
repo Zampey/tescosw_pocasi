@@ -181,3 +181,22 @@
     display: flex;
     gap: 8px;
 }
+
+/* CHART.JS styles */
+
+.forecast-chart-wrapper {
+    position: relative;
+    height: 220px;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.forecast-chart-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}

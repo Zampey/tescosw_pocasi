@@ -2,6 +2,9 @@
  * @import { ForecastResponse, ForecastItem } from '../types/weather.types.js'
  */
 
+import { getTranslation } from '../i18n/i18n.js';
+import { ForecastChart } from './ForecastChart.js';
+
 export class ForecastView {
     /** @type {HTMLElement} */
     #sectionElement;
@@ -9,6 +12,8 @@ export class ForecastView {
     #locationTitleElement;
     /** @type {HTMLElement} */
     #listElement;
+    /** @type {ForecastChart} */
+    #forecastChart;
 
     /**
      * Creates an instance of ForecastView.
@@ -18,10 +23,32 @@ export class ForecastView {
         this.#sectionElement = sectionElement;
         this.#locationTitleElement = /** @type {HTMLElement} */ (this.#sectionElement.querySelector('#locationTitle'));
         this.#listElement = /** @type {HTMLElement} */ (this.#sectionElement.querySelector('#forecastContainer'));
+
+        // Inicializace komponenty grafu (hledá kontejner #chartContainer uvnitř sekce)
+        const chartContainer = /** @type {HTMLElement} */ (this.#sectionElement.querySelector('#chartContainer'));
+        this.#forecastChart = new ForecastChart(chartContainer);
+
+        this.#initHeader();
     }
 
     /**
-     * Renders 5-day forecast response data grouped by days into collapsible rows using pure DOM API.
+     * Initializes header texts using i18n translation files.
+     * @private
+     * @returns {void}
+     */
+    #initHeader() {
+        const t = getTranslation();
+        const titleEl = document.querySelector('.header-content h1');
+        const subtitleEl = document.querySelector('.header-content p');
+        const badgeEl = document.querySelector('.header-badge span:last-child');
+
+        if (titleEl) titleEl.textContent = t.title;
+        if (subtitleEl) subtitleEl.textContent = t.subtitle;
+        if (badgeEl) badgeEl.textContent = t.live;
+    }
+
+    /**
+     * Renders forecast chart and 5-day collapsible rows.
      * @public
      * @param {ForecastResponse} forecastData - The API forecast response object
      * @returns {void}
@@ -30,6 +57,10 @@ export class ForecastView {
         this.#sectionElement.style.display = 'block';
         this.#locationTitleElement.textContent = `${forecastData.city.name}, ${forecastData.city.country}`;
 
+        // 1. Vykreslení grafu teplot
+        this.#forecastChart.render(forecastData);
+
+        // 2. Vykreslení seznamu dnů
         this.#listElement.innerHTML = '';
 
         /** @type {Map<string, ForecastItem[]>} */
@@ -65,7 +96,6 @@ export class ForecastView {
                 }
                 displayItem = closest;
             } else {
-                // For future days, pick the item with the highest temperature as the summary representative
                 let highest = items[0];
                 for (let i = 1; i < items.length; i++) {
                     if (items[i].main.temp > highest.main.temp) {
@@ -90,7 +120,6 @@ export class ForecastView {
 
             rowLeft.appendChild(dayLabelSpan);
 
-            // Show time sub-span only for the current day
             if (isToday) {
                 const rawDefaultTime = displayItem.dt_txt.split(' ')[1].slice(0, 5);
                 const formattedDefaultTime = this.#formatTimeLabel(rawDefaultTime, userLocale);

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="./css/base.css">
     <link rel="stylesheet" href="./css/forecast.css">
     <link rel="stylesheet" href="./css/search.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -23,11 +24,14 @@
             <div id="statusMessage"></div>
         </section>
 
-        <section class="card" id="forecastSection" style="display: none;">
+        <section id="forecastSection" class="card" style="display: none;">
             <div class="forecast-header">
-                <h2 id="locationTitle">—</h2>
+                <h2 id="locationTitle"></h2>
             </div>
-            <div id="forecastContainer" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <!-- graph -->
+            <div id="chartContainer"></div>
+            <!-- forecast for the days -->
+            <div id="forecastContainer"></div>
         </section>
     </div>
 
