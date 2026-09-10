@@ -214,27 +214,19 @@ export class ForecastView {
     }
 
     /**
-     * Formats ISO date string to a friendly localized day label using browser locale.
-     * @private
-     * @param {string} dateStr - Date string in YYYY-MM-DD format
-     * @param {string} locale - Browser locale string
-     * @returns {string} Formatted day label
-     */
+         * Formats ISO date string to a localized day label using browser locale without hardcoded strings.
+         * @private
+         * @param {string} dateStr - Date string in YYYY-MM-DD format
+         * @param {string} locale - Browser locale string
+         * @returns {string} Formatted day label
+         */
     #formatDateLabel(dateStr, locale) {
         const date = new Date(dateStr);
-        const today = new Date();
-
-        if (date.toDateString() === today.toDateString()) {
-            return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date) + ' (Dnes)';
-        }
-
-        const tomorrow = new Date();
-        tomorrow.setDate(today.getDate() + 1);
-        if (date.toDateString() === tomorrow.toDateString()) {
-            return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date) + ' (Zítra)';
-        }
-
-        return new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'numeric' }).format(date);
+        return new Intl.DateTimeFormat(locale, {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'numeric'
+        }).format(date);
     }
 
     /**
