@@ -32,7 +32,6 @@ export class ForecastView {
 
         this.#listElement.innerHTML = '';
 
-        // Group forecast items by calendar date (YYYY-MM-DD)
         /** @type {Map<string, ForecastItem[]>} */
         const daysMap = new Map();
 
@@ -45,12 +44,14 @@ export class ForecastView {
         });
 
         const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
         const userLocale = navigator.language || 'en-US';
 
-        // Render each day as a collapsible row
         daysMap.forEach((items, dateStr) => {
-            let defaultItem = items[0];
-            if (dateStr === now.toISOString().split('T')[0]) {
+            const isToday = (dateStr === todayStr);
+            let displayItem = items[0];
+
+            if (isToday) {
                 const currentTimestamp = now.getTime() / 1000;
                 let closest = items[0];
                 let minDiff = Math.abs(items[0].dt - currentTimestamp);
@@ -62,13 +63,21 @@ export class ForecastView {
                         closest = items[i];
                     }
                 }
-                defaultItem = closest;
+                displayItem = closest;
+            } else {
+                // For future days, pick the item with the highest temperature as the summary representative
+                let highest = items[0];
+                for (let i = 1; i < items.length; i++) {
+                    if (items[i].main.temp > highest.main.temp) {
+                        highest = items[i];
+                    }
+                }
+                displayItem = highest;
             }
 
             const rowElement = document.createElement('div');
             rowElement.className = 'forecast-row';
 
-            // Summary (collapsed) view header
             const headerElement = document.createElement('div');
             headerElement.className = 'forecast-row-header';
 
@@ -79,15 +88,18 @@ export class ForecastView {
             dayLabelSpan.className = 'forecast-day-label';
             dayLabelSpan.textContent = this.#formatDateLabel(dateStr, userLocale);
 
-            const timeSubSpan = document.createElement('span');
-            timeSubSpan.className = 'forecast-time-sub';
-            const rawDefaultTime = defaultItem.dt_txt.split(' ')[1].slice(0, 5);
-            const formattedDefaultTime = this.#formatTimeLabel(rawDefaultTime, userLocale);
-
-            timeSubSpan.textContent = `(${formattedDefaultTime})`;
-
             rowLeft.appendChild(dayLabelSpan);
-            rowLeft.appendChild(timeSubSpan);
+
+            // Show time sub-span only for the current day
+            if (isToday) {
+                const rawDefaultTime = displayItem.dt_txt.split(' ')[1].slice(0, 5);
+                const formattedDefaultTime = this.#formatTimeLabel(rawDefaultTime, userLocale);
+
+                const timeSubSpan = document.createElement('span');
+                timeSubSpan.className = 'forecast-time-sub';
+                timeSubSpan.textContent = `(${formattedDefaultTime})`;
+                rowLeft.appendChild(timeSubSpan);
+            }
 
             const rowRight = document.createElement('div');
             rowRight.className = 'forecast-row-right';
@@ -97,14 +109,14 @@ export class ForecastView {
 
             const iconImg = document.createElement('img');
             iconImg.className = 'forecast-icon-img';
-            iconImg.src = `https://openweathermap.org/img/wn/${defaultItem.weather[0].icon}.png`;
+            iconImg.src = `https://openweathermap.org/img/wn/${displayItem.weather[0].icon}.png`;
             iconImg.alt = 'icon';
             iconImg.width = 30;
             iconImg.height = 30;
 
             const tempSpan = document.createElement('span');
             tempSpan.className = 'forecast-temp-span';
-            tempSpan.textContent = `${Math.round(defaultItem.main.temp)} °C`;
+            tempSpan.textContent = `${Math.round(displayItem.main.temp)} °C`;
 
             weatherIconContainer.appendChild(iconImg);
             weatherIconContainer.appendChild(tempSpan);
@@ -113,10 +125,10 @@ export class ForecastView {
             metaSpan.className = 'forecast-meta-span';
 
             const humidityDiv = document.createElement('span');
-            humidityDiv.textContent = `💧 ${defaultItem.main.humidity}%`;
+            humidityDiv.textContent = `💧 ${displayItem.main.humidity}%`;
 
             const windDiv = document.createElement('span');
-            windDiv.textContent = `💨 ${defaultItem.wind.speed} m/s`;
+            windDiv.textContent = `💨 ${displayItem.wind.speed} m/s`;
 
             metaSpan.appendChild(humidityDiv);
             metaSpan.appendChild(windDiv);
@@ -132,14 +144,13 @@ export class ForecastView {
             headerElement.appendChild(rowLeft);
             headerElement.appendChild(rowRight);
 
-            // Expanded detail view container for all 3-hour blocks of the day
             const detailsElement = document.createElement('div');
             detailsElement.className = 'forecast-row-details';
 
             const listContainer = document.createElement('div');
             listContainer.className = 'forecast-details-list';
 
-            items.forEach((subItem, index) => {
+            items.forEach((subItem) => {
                 const startTimeRaw = subItem.dt_txt.split(' ')[1].slice(0, 5);
                 const [hours, minutes] = startTimeRaw.split(':').map(Number);
                 const endHours = (hours + 3) % 24;
@@ -198,7 +209,6 @@ export class ForecastView {
 
             detailsElement.appendChild(listContainer);
 
-            // Toggle smooth expansion on click using max-height animation
             headerElement.addEventListener('click', () => {
                 const isExpanded = detailsElement.classList.contains('expanded');
                 if (isExpanded) {
@@ -219,12 +229,12 @@ export class ForecastView {
     }
 
     /**
-         * Formats ISO date string to a localized day label using browser locale without hardcoded strings.
-         * @private
-         * @param {string} dateStr - Date string in YYYY-MM-DD format
-         * @param {string} locale - Browser locale string
-         * @returns {string} Formatted day label
-         */
+     * Formats ISO date string to a localized day label using browser locale.
+     * @private
+     * @param {string} dateStr - Date string in YYYY-MM-DD format
+     * @param {string} locale - Browser locale string
+     * @returns {string} Formatted day label
+     */
     #formatDateLabel(dateStr, locale) {
         const date = new Date(dateStr);
         return new Intl.DateTimeFormat(locale, {
@@ -252,7 +262,7 @@ export class ForecastView {
                 minute: '2-digit'
             }).format(date);
         } catch {
-            return timeStr; // Fallback, pokud by formátování selhalo
+            return timeStr;
         }
     }
 
