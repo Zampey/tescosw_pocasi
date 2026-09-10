@@ -81,7 +81,10 @@ export class ForecastView {
 
             const timeSubSpan = document.createElement('span');
             timeSubSpan.className = 'forecast-time-sub';
-            timeSubSpan.textContent = `(${defaultItem.dt_txt.split(' ')[1].slice(0, 5)})`;
+            const rawDefaultTime = defaultItem.dt_txt.split(' ')[1].slice(0, 5);
+            const formattedDefaultTime = this.#formatTimeLabel(rawDefaultTime, userLocale);
+
+            timeSubSpan.textContent = `(${formattedDefaultTime})`;
 
             rowLeft.appendChild(dayLabelSpan);
             rowLeft.appendChild(timeSubSpan);
@@ -137,12 +140,14 @@ export class ForecastView {
             listContainer.className = 'forecast-details-list';
 
             items.forEach((subItem, index) => {
-                const startTime = subItem.dt_txt.split(' ')[1].slice(0, 5);
-                // Compute approximate end time (+3 hours) based on OpenWeatherMap 3-hour intervals
-                const [hours, minutes] = startTime.split(':').map(Number);
+                const startTimeRaw = subItem.dt_txt.split(' ')[1].slice(0, 5);
+                const [hours, minutes] = startTimeRaw.split(':').map(Number);
                 const endHours = (hours + 3) % 24;
-                const endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-                const timeRange = `${startTime} – ${endTime}`;
+                const endTimeRaw = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+                const formattedStartTime = this.#formatTimeLabel(startTimeRaw, userLocale);
+                const formattedEndTime = this.#formatTimeLabel(endTimeRaw, userLocale);
+                const timeRange = `${formattedStartTime} – ${formattedEndTime}`;
 
                 const subItemEl = document.createElement('div');
                 subItemEl.className = 'forecast-detail-item';
@@ -227,6 +232,28 @@ export class ForecastView {
             day: 'numeric',
             month: 'numeric'
         }).format(date);
+    }
+
+    /**
+     * Formats time string (HH:mm) to localized format using browser locale settings.
+     * @private
+     * @param {string} timeStr - Time string in HH:mm format
+     * @param {string} locale - Browser locale string
+     * @returns {string} Formatted localized time
+     */
+    #formatTimeLabel(timeStr, locale) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+
+        try {
+            return new Intl.DateTimeFormat(locale, {
+                hour: 'numeric',
+                minute: '2-digit'
+            }).format(date);
+        } catch {
+            return timeStr; // Fallback, pokud by formátování selhalo
+        }
     }
 
     /**
