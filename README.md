@@ -1,12 +1,13 @@
 # Weather SPA
 
-A modern single-page web application (**SPA**) for tracking a 5-day weather forecast, built with vanilla **JavaScript (ES6 modules)** without heavy frameworks. It emphasizes modular architecture, full internationalization (i18n), responsive UI, and interactive data visualization using Chart.js.
+A modern single-page web application (**SPA**) for tracking a 5-day weather forecast, built with vanilla **JavaScript (ES6 modules)** without heavy frameworks. It emphasizes modular architecture, partial internationalization (i18n), responsive UI, and interactive data visualization using Chart.js.
 
 ## Running the Application
 
 Because this application relies on native ES6 modules (`import`/`export`), it cannot be opened directly from the local file system (`file://` protocol) due to browser security restrictions regarding CORS policies. To run the project correctly, it must be served via a local HTTP server using one of the methods below.
 
-### Option 1: Visual Studio Code (Live Server Extension)
+### Option 1: Visual Studio Code (Live Server Extension) 
+(I used this option when developing this app)
 
 * Open the project root folder in **Visual Studio Code**.
 * Install the **Live Server** extension (by Ritwick Dey) from the marketplace.
