@@ -14,39 +14,50 @@ export class ApiClient {
     }
 
     /**
-     * Sends an HTTP request using the provided ApiRequest instance.
-     * @param {ApiRequest} request - The request instance
-     * @returns {Promise<{ data: any, status: number, ok: boolean, headers: Headers }>}
+     * Sends an HTTP request using callbacks instead of returning a Promise.
+     * @param {ApiRequest} request
+     * @param {(result: { data: any, status: number, ok: boolean, headers: Headers }) => void} onSuccess
+     * @param {(error: Error) => void} onError
      */
-    async send(request) {
-        // Safely merge default parameters via the request's own method
+    send(request, onSuccess, onError) {
         request.mergeParams(this.#defaultParams);
 
         const url = request.getUrl(this.#baseUrl);
         const options = request.toFetchOptions();
 
-        // Perform the HTTP request using the Fetch API
-        const response = await fetch(url, options);
+        // Nativní fetch vrací Promise, ale my ho uvnitř uzavřeme do .then()/.catch()
+        fetch(url, options)
+            .then(async (response) => {
+                let data = null;
+                const contentType = response.headers.get('content-type');
 
-        let data = null;
-        const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
 
-        // Attempt to parse the response body based on its content type
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            data = await response.text();
-        }
+                if (!response.ok) {
+                    throw new Error(`API Error [${response.status}]: ${JSON.stringify(data)}`);
+                }
 
-        if (!response.ok) {
-            throw new Error(`API Error [${response.status}]: ${JSON.stringify(data)}`);
-        }
-
-        return {
-            data,
-            status: response.status,
-            ok: response.ok,
-            headers: response.headers
-        };
+                // Úspěch - zavoláme callback
+                if (typeof onSuccess === 'function') {
+                    onSuccess({
+                        data,
+                        status: response.status,
+                        ok: response.ok,
+                        headers: response.headers
+                    });
+                }
+            })
+            .catch((error) => {
+                // Chyba - zavoláme error callback
+                if (typeof onError === 'function') {
+                    onError(error);
+                } else {
+                    console.error('ApiClient unhandled error:', error);
+                }
+            });
     }
 }
