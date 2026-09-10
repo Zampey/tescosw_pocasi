@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather SPA - Test Geocoding</title>
+    <title>Weather SPA - Test Forecast</title>
     <style>
         body {
             font-family: sans-serif;
@@ -44,31 +44,36 @@
 </head>
 <body>
 
-    <h1>Test Geocoding Service</h1>
-    <p>Začni psát název města (např. Prag, London, Olomouc):</p>
+    <h1>Test 5-Day Forecast Service</h1>
+    <p>Napiš město a klikni na výsledek pro načtení předpovědi:</p>
 
     <input type="text" id="cityInput" placeholder="Zadej město..." autocomplete="off">
     <div id="status"></div>
     <ul id="resultsList"></ul>
 
-    <!-- Důležité: type="module" pro podporu ES importů -->
+    <h2>Výsledek předpovědi:</h2>
+    <div id="forecastStatus"></div>
+    <ul id="forecastList"></ul>
+
     <script type="module">
         import { ApiClient } from './js/api/ApiClient.js';
         import { GeocodingService } from './js/services/GeocodingService.js';
+        import { ForecastService } from './js/services/ForecastService.js';
 
-        // Inicializace s tvým OpenWeatherMap API klíčem
         const API_KEY = '';
         const BASE_URL = 'https://api.openweathermap.org';
 
         const apiClient = new ApiClient(BASE_URL, { appid: API_KEY });
         const geocodingService = new GeocodingService(apiClient, 5);
+        const forecastService = new ForecastService(apiClient);
 
-        // UI elementy
         const input = document.getElementById('cityInput');
         const statusDiv = document.getElementById('status');
         const resultsList = document.getElementById('resultsList');
+        const forecastStatus = document.getElementById('forecastStatus');
+        const forecastList = document.getElementById('forecastList');
 
-        // Napojení Event-Driven listenerů ze služby
+        // --- Geocoding Listeners ---
         geocodingService.addEventListener('search:start', (e) => {
             statusDiv.innerHTML = `<span class="loading">Hledám lokaci "${e.detail.query}"...</span>`;
             resultsList.innerHTML = '';
@@ -85,19 +90,47 @@
 
             locations.forEach(loc => {
                 const li = document.createElement('li');
-                li.textContent = `${loc.name} (${loc.country}${loc.state ? `, ${loc.state}` : ''}) — Lat: ${loc.lat}, Lon: ${loc.lon}`;
+                li.style.cursor = 'pointer';
+                li.textContent = `📍 ${loc.name} (${loc.country}${loc.state ? `, ${loc.state}` : ''}) — Klikni pro předpověď`;
+
+                // Po kliknutí na město spustíme načtení předpovědi
+                li.addEventListener('click', () => {
+                    forecastService.fetchForecast(loc.lat, loc.lon);
+                });
+
                 resultsList.appendChild(li);
             });
         });
 
         geocodingService.addEventListener('search:error', (e) => {
-            statusDiv.innerHTML = `<span class="error">Chyba: ${e.detail.message}</span>`;
+            statusDiv.innerHTML = `<span class="error">Chyba geokódování: ${e.detail.message}</span>`;
         });
 
-        // Sledování vstupu uživatele
+        // --- Forecast Listeners ---
+        forecastService.addEventListener('forecast:start', (e) => {
+            forecastStatus.innerHTML = `<span class="loading">Načítám předpověď pro [${e.detail.lat}, ${e.detail.lon}]...</span>`;
+            forecastList.innerHTML = '';
+        });
+
+        forecastService.addEventListener('forecast:success', (e) => {
+            const data = e.detail;
+            forecastStatus.innerHTML = `<strong>Město:</strong> ${data.city.name} (${data.city.country}) — Počet záznamů: ${data.cnt}`;
+
+            // Vykreslíme prvních několik 3hodinových kroků předpovědi
+            data.list.slice(0, 8).forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.dt_txt}: ${item.main.temp} °C, ${item.weather[0].description} (Vítr: ${item.wind.speed} m/s)`;
+                forecastList.appendChild(li);
+            });
+        });
+
+        forecastService.addEventListener('forecast:error', (e) => {
+            forecastStatus.innerHTML = `<span class="error">Chyba předpovědi: ${e.detail.message}</span>`;
+        });
+
+        // Vstup uživatele pro geokódování
         input.addEventListener('input', (e) => {
-            const query = e.detail ? e.detail : e.target.value;
-            geocodingService.searchLocations(query);
+            geocodingService.searchLocations(e.target.value);
         });
     </script>
 
