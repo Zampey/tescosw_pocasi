@@ -8,6 +8,7 @@ import { GeocodingService } from './services/GeocodingService.js';
 import { ForecastService } from './services/ForecastService.js';
 import { SearchPanel } from './components/SearchPanel.js';
 import { ForecastView } from './components/ForecastView.js';
+import { getTranslation } from './i18n/i18n.js';
 
 export class App {
     /** @type {ApiClient} */
@@ -29,6 +30,9 @@ export class App {
      * @param {string} apiKey - OpenWeatherMap API key
      */
     constructor(apiKey) {
+        // Initialize i18n texts in header
+        this.#initHeaderTexts();
+
         // Initialize infrastructure and domain services
         this.#apiClient = new ApiClient('https://api.openweathermap.org', { appid: apiKey });
         this.#geocodingService = new GeocodingService(this.#apiClient, 5);
@@ -45,6 +49,22 @@ export class App {
         this.#forecastView = new ForecastView(forecastSection);
 
         this.#initEvents();
+    }
+
+    /**
+     * Initializes header texts using i18n translation files based on browser language.
+     * @private
+     * @returns {void}
+     */
+    #initHeaderTexts() {
+        const t = getTranslation();
+        const titleEl = document.querySelector('#headerTitle');
+        const subtitleEl = document.querySelector('#headerSubtitle');
+        const badgeEl = document.querySelector('#headerBadge');
+
+        if (titleEl) titleEl.textContent = t.title;
+        if (subtitleEl) subtitleEl.textContent = t.subtitle;
+        if (badgeEl) badgeEl.textContent = t.live;
     }
 
     /**
