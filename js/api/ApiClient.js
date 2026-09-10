@@ -14,23 +14,24 @@ export class ApiClient {
     }
 
     /**
-     * Sends an HTTP request and returns the native Response or parsed payload.
-     * @template T
+     * Sends an HTTP request using the provided ApiRequest instance.
      * @param {ApiRequest} request - The request instance
-     * @returns {Promise<{ data: T, status: number, ok: boolean, headers: Headers }>}
+     * @returns {Promise<{ data: any, status: number, ok: boolean, headers: Headers }>}
      */
     async send(request) {
-        // Merge default params with request params
-        request.params = { ...this.#defaultParams, ...request.params };
+        // Safely merge default parameters via the request's own method
+        request.mergeParams(this.#defaultParams);
 
         const url = request.getUrl(this.#baseUrl);
         const options = request.toFetchOptions();
 
+        // Perform the HTTP request using the Fetch API
         const response = await fetch(url, options);
 
         let data = null;
         const contentType = response.headers.get('content-type');
 
+        // Attempt to parse the response body based on its content type
         if (contentType && contentType.includes('application/json')) {
             data = await response.json();
         } else {
