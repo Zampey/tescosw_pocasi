@@ -3,134 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather SPA - Test Forecast</title>
+    <title>Weather SPA</title>
     <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --primary: #3498db;
+            --border-color: #e2e8f0;
+            --error-color: #e74c3c;
+        }
+
         body {
-            font-family: sans-serif;
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 0 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
         }
 
-        input {
+        .app-container {
             width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        ul {
-            list-style: none;
-            padding: 0;
-            margin-top: 10px;
+        header h1 {
+            font-size: 26px;
+            margin: 0 0 4px 0;
+            color: var(--text-main);
         }
 
-        li {
-            padding: 8px;
-            background: #f4f4f4;
-            margin-bottom: 5px;
-            border-radius: 4px;
+        header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
         }
 
-        .loading {
-            color: #666;
-            font-style: italic;
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        #statusMessage {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 12px;
+            min-height: 20px;
         }
 
         .error {
-            color: #d9534f;
+            color: var(--error-color) !important;
+            font-weight: 500;
+        }
+
+        .forecast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+
+        .forecast-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .forecast-item {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .forecast-item .time {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .forecast-item .temp {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .forecast-item .desc {
+            font-size: 12px;
+            color: var(--text-muted);
         }
     </style>
 </head>
 <body>
 
-    <h1>Test 5-Day Forecast Service</h1>
-    <p>Napiš město a klikni na výsledek pro načtení předpovědi:</p>
+    <div class="app-container">
+        <header>
+            <h1>Počasí</h1>
+            <p>Aplikace pro sledování 5denní předpovědi počasí</p>
+        </header>
 
-    <input type="text" id="cityInput" placeholder="Zadej město..." autocomplete="off">
-    <div id="status"></div>
-    <ul id="resultsList"></ul>
+        <section class="card">
+            <div id="searchContainer"></div>
+            <div id="statusMessage"></div>
+        </section>
 
-    <h2>Výsledek předpovědi:</h2>
-    <div id="forecastStatus"></div>
-    <ul id="forecastList"></ul>
+        <section class="card" id="forecastSection" style="display: none;">
+            <div class="forecast-header">
+                <h2 id="locationTitle">—</h2>
+            </div>
+            <div id="forecastContainer" class="forecast-grid"></div>
+        </section>
+    </div>
 
     <script type="module">
-        import { ApiClient } from './js/api/ApiClient.js';
-        import { GeocodingService } from './js/services/GeocodingService.js';
-        import { ForecastService } from './js/services/ForecastService.js';
+        import { App } from './js/App.js';
 
-        const API_KEY = '';
-        const BASE_URL = 'https://api.openweathermap.org';
-
-        const apiClient = new ApiClient(BASE_URL, { appid: API_KEY });
-        const geocodingService = new GeocodingService(apiClient, 5);
-        const forecastService = new ForecastService(apiClient);
-
-        const input = document.getElementById('cityInput');
-        const statusDiv = document.getElementById('status');
-        const resultsList = document.getElementById('resultsList');
-        const forecastStatus = document.getElementById('forecastStatus');
-        const forecastList = document.getElementById('forecastList');
-
-        // --- Geocoding Listeners ---
-        geocodingService.addEventListener('search:start', (e) => {
-            statusDiv.innerHTML = `<span class="loading">Hledám lokaci "${e.detail.query}"...</span>`;
-            resultsList.innerHTML = '';
-        });
-
-        geocodingService.addEventListener('search:success', (e) => {
-            statusDiv.innerHTML = '';
-            const locations = e.detail;
-
-            if (locations.length === 0) {
-                resultsList.innerHTML = '<li>Žádná města nenalezena.</li>';
-                return;
-            }
-
-            locations.forEach(loc => {
-                const li = document.createElement('li');
-                li.style.cursor = 'pointer';
-                li.textContent = `📍 ${loc.name} (${loc.country}${loc.state ? `, ${loc.state}` : ''}) — Klikni pro předpověď`;
-
-                // Po kliknutí na město spustíme načtení předpovědi
-                li.addEventListener('click', () => {
-                    forecastService.fetchForecast(loc.lat, loc.lon);
-                });
-
-                resultsList.appendChild(li);
-            });
-        });
-
-        geocodingService.addEventListener('search:error', (e) => {
-            statusDiv.innerHTML = `<span class="error">Chyba geokódování: ${e.detail.message}</span>`;
-        });
-
-        // --- Forecast Listeners ---
-        forecastService.addEventListener('forecast:start', (e) => {
-            forecastStatus.innerHTML = `<span class="loading">Načítám předpověď pro [${e.detail.lat}, ${e.detail.lon}]...</span>`;
-            forecastList.innerHTML = '';
-        });
-
-        forecastService.addEventListener('forecast:success', (e) => {
-            const data = e.detail;
-            forecastStatus.innerHTML = `<strong>Město:</strong> ${data.city.name} (${data.city.country}) — Počet záznamů: ${data.cnt}`;
-
-            // Vykreslíme prvních několik 3hodinových kroků předpovědi
-            data.list.slice(0, 8).forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = `${item.dt_txt}: ${item.main.temp} °C, ${item.weather[0].description} (Vítr: ${item.wind.speed} m/s)`;
-                forecastList.appendChild(li);
-            });
-        });
-
-        forecastService.addEventListener('forecast:error', (e) => {
-            forecastStatus.innerHTML = `<span class="error">Chyba předpovědi: ${e.detail.message}</span>`;
-        });
-
-        // Vstup uživatele pro geokódování
-        input.addEventListener('input', (e) => {
-            geocodingService.searchLocations(e.target.value);
+        // Spuštění aplikace po načtení DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_KEY = 'bcf9e881cf5a0071957da688310f6493';
+            new App(API_KEY);
         });
     </script>
 
